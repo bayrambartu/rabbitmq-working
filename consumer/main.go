@@ -47,10 +47,15 @@ func main() {
 	for msg := range msgs {
 		log.Printf("Received message: %s", msg.Body)
 
-		err := msg.Ack(false)
+		log.Println("Sending ack...")
+		//time.Sleep(10 * time.Second) // Simulate processing time
+
+		// after processing the message, send an acknowledgment
+		err := msg.Ack(false) // multiple=false , requeue=true
 		if err != nil {
 			log.Println("ACK failed:", err)
 		}
+		log.Println("ack sent")
 	}
 }
 

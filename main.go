@@ -28,8 +28,21 @@ func main() {
 
 	log.Println("Channel created")
 
+	err = ch.ExchangeDeclare(
+		"logs",
+		"direct",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	_, err = ch.QueueDeclare(
-		"alerts",
+		"hello",
 		true,
 		false,
 		false,
@@ -41,14 +54,26 @@ func main() {
 	}
 	log.Println("Queue declared")
 
+	// excahnge ile queue'yu baglamak için binding yapıyoruz
+	err = ch.QueueBind(
+		"hello", // queue name
+		"hello", // routing key
+		"logs",  // exchange name
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ch.Publish(
-		"",
-		"alerts",
+		"logs",  // exchange routing islemini yapar
+		"hello", // routing key
 		false,
 		false,
 		ampq.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte("Hello from producer!, Merhaba RabbitMQ"),
+			Body:        []byte("message of world"),
 		},
 	)
 	if err != nil {
