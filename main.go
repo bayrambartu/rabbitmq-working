@@ -1,48 +1,28 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	ampq "github.com/rabbitmq/amqp091-go"
 )
 
 func main() {
-
-	// canhge the password -> rabbitmqctl change_password guest qqwwee1
+	// declare conneciton
 	conn, err := ampq.Dial("amqp://guest:qqwwee1@localhost:5672/")
-	// rabbitmq'ya bir conneciton açıyor --> conn,err := ampq.Dial("...")
-
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer conn.Close()
-
-	fmt.Println("Connected to RabbitMQ")
-
+	// declare channel
 	ch, err := conn.Channel()
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer ch.Close()
 
-	log.Println("Channel created")
-
-	err = ch.ExchangeDeclare(
-		"logs",
-		"direct",
-		true,
-		false,
-		false,
-		false,
-		nil,
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+	// declare queue
 	_, err = ch.QueueDeclare(
-		"hello",
+		"example-queue",
 		true,
 		false,
 		false,
@@ -52,33 +32,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Queue declared")
 
-	// excahnge ile queue'yu baglamak için binding yapıyoruz
-	err = ch.QueueBind(
-		"hello", // queue name
-		"hello", // routing key
-		"logs",  // exchange name
-		false,
-		nil,
-	)
+	message := "Hello, RabbitMQ"
+	byteMessage := []byte(message)
+
+	err = ch.Publish("", "example-queue", false, false, ampq.Publishing{
+		ContentType: "text/plain",
+		Body:        byteMessage,
+	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("cannot publish message: %w", err)
 	}
 
-	ch.Publish(
-		"logs",  // exchange routing islemini yapar
-		"hello", // routing key
-		false,
-		false,
-		ampq.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte("message of world"),
-		},
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
+	select {}
 
-	log.Println("Message published")
 }

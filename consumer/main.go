@@ -20,7 +20,18 @@ func main() {
 	defer ch.Close()
 
 	_, err = ch.QueueDeclare(
-		"alerts",
+		"payment",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = ch.QueueDeclare(
+		"notification",
 		true,
 		false,
 		false,
@@ -31,8 +42,21 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msgs, err := ch.Consume(
-		"alerts",
+	paymentMsgs, err := ch.Consume(
+		"payment", // queue name
+		"",        // consumer name
+		false,     //auto ack
+		false,     // exclusice
+		false,     // no local
+		false,     // no wait
+		nil,       // args
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	notificationMsgs, err := ch.Consume(
+		"notification",
 		"",
 		false, //manual ack
 		false,
@@ -44,19 +68,40 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for msg := range msgs {
-		log.Printf("Received message: %s", msg.Body)
+	// for msg := range msgs {
+	// 	log.Printf("Received message: %s", msg.Body)
 
-		log.Println("Sending ack...")
-		//time.Sleep(10 * time.Second) // Simulate processing time
+	// 	log.Println("Sending ack...")
+	// 	//time.Sleep(10 * time.Second) // Simulate processing time
 
-		// after processing the message, send an acknowledgment
-		err := msg.Ack(false) // multiple=false , requeue=true
-		if err != nil {
-			log.Println("ACK failed:", err)
+	// 	//after processing the message, send an acknowledgment
+	// 	err := msg.Ack(false)
+	// 	if err != nil {
+	// 		log.Println("ACK failed:", err)
+	// 	}
+	// 	log.Println("ack sent")
+	// }
+
+	go func() {
+		for msg := range paymentMsgs {
+			log.Printf("PAYMENT: %s", msg.Body)
+
+			if err := msg.Ack(false); err != nil {
+				log.Println("ACK failed:", err)
+			}
 		}
-		log.Println("ack sent")
-	}
-}
+	}()
 
-// rabbitmq-service start
+	go func() {
+		for msg := range notificationMsgs {
+			log.Printf("NOTIFICATION: %s", msg.Body)
+
+			if err := msg.Ack(false); err != nil {
+				log.Println("ACK failed:", err)
+			}
+		}
+	}()
+	select {}
+
+	// rabbitmq-service start
+}
