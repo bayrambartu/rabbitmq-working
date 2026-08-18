@@ -54,11 +54,11 @@ func main() {
 
 		time.Sleep(time.Second * 2)
 
-		err := msg.Nack(false, true)
+		err := msg.Ack(false)
 		if err != nil {
-			log.Println("Error nacking message:", err)
+			log.Println("Error acknowledging message:", err)
 			continue
 		}
-		fmt.Println("Message nacked", string(msg.Body))
+		fmt.Println("Message acknowledged", string(msg.Body))
 	}
 }
