@@ -59,7 +59,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	for i := 1; i <= 10; i++ {
+	for i := 1; i <= 50; i++ {
 		message := fmt.Sprintf("Message %d", i)
 
 		err = ch.Publish(
