@@ -41,7 +41,7 @@ func main() {
 	)
 	failOnError(err, "Failed to consume messages")
 
-	forever := make(chan bool)
+	forever := make(chan struct{})
 
 	go func() {
 		for d := range msgs {
